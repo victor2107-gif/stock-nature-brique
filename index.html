@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock — Nature Brique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>:root{
+  --bg:#eceeeb; --surface:#fcfcfb; --surface-2:#f3f4f1; --ink:#1c1613; --ink-2:#564e49; --muted:#7d756f;
+  --line:#dadbd4; --line-2:#c3c2b7; --grid:#e1e0d9;
+  --accent:#a8401d; --accent-hover:#8a3214; --accent-ink:#ffffff; --accent-soft:#f3e1d8;
+  --rail:#241a16; --rail-ink:#f3ece7; --rail-muted:#b5a79e; --rail-active:#3d2b23;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b;
+  --good-bg:#e3f3e1; --good-ink:#0b5a0b; --warn-bg:#fbefcf; --warn-ink:#6f4b00; --crit-bg:#f8e0de; --crit-ink:#962020; --neutral-bg:#e8e9e4; --neutral-ink:#4b4541;
+  --bar:#a8401d; --bar-2:#c9a48f;
+  --shadow:0 1px 2px rgba(28,22,19,.05),0 10px 30px rgba(28,22,19,.07);
+  --font-display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --font-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --font-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#100f0e; --surface:#1a1a19; --surface-2:#232221; --ink:#f5f1ee; --ink-2:#cac2bc; --muted:#978e88;
+  --line:#2f2d2b; --line-2:#413e3b; --grid:#2c2c2a;
+  --accent:#e58257; --accent-hover:#f09b74; --accent-ink:#1d0e07; --accent-soft:#3b2218;
+  --rail:#0a0908; --rail-ink:#f3ece7; --rail-muted:#a3968e; --rail-active:#2b1e18;
+  --good-bg:#16301a; --good-ink:#7fdc7f; --warn-bg:#3a2e0e; --warn-ink:#fbc94f; --crit-bg:#3d1a1a; --crit-ink:#f39a9a; --neutral-bg:#2a2927; --neutral-ink:#cac2bc;
+  --bar:#e58257; --bar-2:#7a5444;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:14.5px;line-height:1.45}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3{font-family:var(--font-display);margin:0;letter-spacing:-.01em}
+h1{font-size:1.75rem;font-weight:700;line-height:1.15}
+h2{font-size:1.08rem;font-weight:650}
+p{margin:0}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--font-mono);font-size:.9em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100dvh}
+.rail{background:var(--rail);color:var(--rail-ink);display:flex;flex-direction:column;gap:22px;padding:20px 14px;position:sticky;top:0;align-self:start;height:100dvh}
+.brand{display:flex;gap:11px;align-items:center;padding:2px 6px}
+.brand strong{font-family:var(--font-display);font-size:1.12rem;font-weight:700;display:block;line-height:1.1}
+.brand span{font-size:.74rem;color:var(--rail-muted);letter-spacing:.04em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{all:unset;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 11px;border-radius:7px;cursor:pointer;color:var(--rail-muted);font-weight:500;white-space:nowrap}
+.nav button:hover{color:var(--rail-ink);background:var(--rail-active)}
+.nav button[aria-current="page"]{color:var(--rail-ink);background:var(--rail-active);box-shadow:inset 3px 0 0 var(--accent)}
+.nav .count{font-family:var(--font-mono);font-size:.74rem;color:var(--rail-muted)}
+.nav .count.alert{color:#fff;background:var(--crit);border-radius:99px;padding:0 7px}
+.rail-foot{margin-top:auto;font-size:.78rem;color:var(--rail-muted);padding:0 6px;display:flex;flex-direction:column;gap:6px}
+.rail-foot button{all:unset;cursor:pointer;text-decoration:underline}
+
+main{padding-block:26px 60px;padding-inline:clamp(16px,3.4vw,40px);min-width:0;display:flex;flex-direction:column;gap:18px;max-width:1260px;width:100%}
+.vh{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.vh .sub{color:var(--ink-2);margin-top:3px}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.grow{flex:1 1 auto;min-width:0}
+
+.btn{all:unset;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:8px 14px;border-radius:7px;border:1px solid var(--line-2);background:var(--surface);cursor:pointer;font-weight:550;font-size:.9rem;white-space:nowrap;color:var(--ink)}
+.btn:hover{border-color:var(--ink-2)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--ink)}
+.btn.danger{color:var(--crit-ink)}
+.btn.sm{padding:5px 9px;font-size:.82rem}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.card-h{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:.84rem}
+.banner{border-radius:9px;padding:11px 14px;font-size:.9rem;background:var(--warn-bg);color:var(--warn-ink)}
+.banner.info{background:var(--accent-soft);color:var(--ink)}
+.banner.crit{background:var(--crit-bg);color:var(--crit-ink)}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:.78rem;font-weight:600;white-space:nowrap;background:var(--neutral-bg);color:var(--neutral-ink)}
+.pill.good{background:var(--good-bg);color:var(--good-ink)}
+.pill.warn{background:var(--warn-bg);color:var(--warn-ink)}
+.pill.crit{background:var(--crit-bg);color:var(--crit-ink)}
+.pill.acc{background:var(--accent-soft);color:var(--accent)}
+
+.seg{display:inline-flex;border:1px solid var(--line-2);border-radius:8px;overflow:hidden;background:var(--surface);flex-wrap:wrap}
+.seg button{all:unset;box-sizing:border-box;padding:6px 12px;font-size:.86rem;font-weight:500;cursor:pointer;color:var(--ink-2);white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--surface)}
+
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;font-weight:550;color:var(--ink-2);min-width:0}
+.in{border:1px solid var(--line-2);background:var(--surface);border-radius:7px;padding:8px 10px;width:100%;min-width:0;color:var(--ink);font-weight:400;font-size:.92rem}
+.in:focus{outline:2px solid var(--accent);outline-offset:0;border-color:var(--accent)}
+.in.r{text-align:right;font-variant-numeric:tabular-nums}
+textarea.in{resize:vertical;min-height:60px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.span2{grid-column:1/-1}
+
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child>td{border-bottom:0}
+th.r,td.r{text-align:right}
+td.r{font-variant-numeric:tabular-nums;white-space:nowrap}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--surface-2)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.kpi b{font-family:var(--font-display);font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.1}
+.kpi span{color:var(--ink-2);font-size:.84rem}
+.kpi.crit b{color:var(--crit)} .kpi.warn b{color:var(--warn-ink)}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:18px}
+
+.hbar{display:grid;grid-template-columns:minmax(110px,38%) 1fr auto;gap:8px;align-items:center;font-size:.86rem}
+.hbar .lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbar .trk{height:14px;background:var(--surface-2);border-radius:4px;overflow:hidden}
+.hbar .trk i{display:block;height:100%;background:var(--bar);border-radius:4px}
+.hbar .v{font-variant-numeric:tabular-nums;color:var(--ink-2);min-width:70px;text-align:right}
+.bars{display:flex;flex-direction:column;gap:7px}
+.vbars{display:flex;align-items:flex-end;gap:6px;height:170px;padding-top:10px;border-bottom:1px solid var(--line-2)}
+.vbars .c{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:3px;min-width:0}
+.vbars .c i{display:block;width:100%;max-width:38px;background:var(--bar);border-radius:3px 3px 0 0;min-height:1px}
+.vbars .c small{font-size:.68rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.vlabs{display:flex;gap:6px}.vlabs span{flex:1;text-align:center;font-size:.72rem;color:var(--muted);min-width:0;overflow:hidden}
+
+dialog{border:0;border-radius:12px;padding:0;background:var(--surface);color:var(--ink);box-shadow:var(--shadow);width:min(640px,94vw)}
+dialog::backdrop{background:rgba(20,15,12,.45)}
+dialog form{padding:22px;display:flex;flex-direction:column;gap:14px}
+dialog .foot{display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.err{color:var(--crit);font-size:.86rem;min-height:1.1em}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 18px;border-radius:8px;font-size:.9rem;z-index:50;box-shadow:var(--shadow)}
+
+.login{position:fixed;inset:0;display:grid;place-items:center;padding:16px;background:var(--bg);z-index:100}
+.login form,.login .box{width:min(380px,100%);background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:26px;display:grid;gap:12px}
+.login .lnk{all:unset;cursor:pointer;color:var(--accent);font-size:.88rem;text-align:center}
+
+.mtop{display:none}
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr}
+  .rail{position:fixed;inset:0 auto 0 0;width:250px;z-index:40;transform:translateX(-100%);transition:transform .2s}
+  .rail.open{transform:none}
+  .mtop{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--rail);color:var(--rail-ink);position:sticky;top:0;z-index:30}
+  .mtop button{all:unset;cursor:pointer;font-size:1.3rem;padding:2px 6px}
+  .cols{grid-template-columns:1fr}
+}
+@media print{
+  .rail,.mtop,.noprint,.btn{display:none!important}
+  .shell{display:block} main{padding:0;max-width:none}
+  .card{border:0;padding:0}
+  body{background:#fff;color:#000}
+}
+
+td.mono{white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="mtop"><button id="menu" aria-label="Menu">☰</button><strong>Stock Nature Brique</strong></div>
+<div class="shell">
+  <aside class="rail">
+    <div class="brand"><svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="1" y="7" width="15" height="9" rx="1.5" fill="#a8401d"/><rect x="18" y="7" width="15" height="9" rx="1.5" fill="#c9653d"/><rect x="9" y="18" width="16" height="9" rx="1.5" fill="#e58257"/></svg><div><strong>Nature Brique</strong><span>Stock &amp; pièces</span></div></div>
+    <nav class="nav" aria-label="Navigation">
+      <button data-v="dash">Tableau de bord</button>
+      <button data-v="articles">Articles <span class="count" id="cnt-art"></span></button>
+      <button data-v="mouvements">Mouvements</button>
+      <button data-v="analyse">Analyse d'usure</button>
+      <button data-v="commandes">À commander <span class="count" id="cnt-cmd"></span></button>
+      <button data-v="inventaire">Inventaire</button>
+      <button data-v="equipements">Équipements</button>
+      <button data-v="parametres">Paramètres</button>
+    </nav>
+    <div class="rail-foot"><span id="who"></span><span id="sync">Connexion…</span><button id="logout" type="button">Déconnexion</button></div>
+  </aside>
+  <main id="view" tabindex="-1"><p class="empty">Chargement…</p></main>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+<script>
+// Configuration Firebase du projet erp-nature-brique (valeurs publiques : la sécurité est assurée par les règles Firestore et la connexion).
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyA5syctebFq1WOaj99s7XbKd41McB5YhVA",
+  authDomain: "erp-nature-brique.firebaseapp.com",
+  projectId: "erp-nature-brique",
+  storageBucket: "erp-nature-brique.firebasestorage.app",
+  messagingSenderId: "325849659757",
+  appId: "1:325849659757:web:14157d9b66ff4e78688264"
+};
+</script>
+<script>/* Nature Brique — Gestion de stock du matériel et des pièces de rechange
+   Firebase (même projet et mêmes comptes que l'ERP) : collections stock_articles,
+   stock_mouvements, stock_equipements, stock_config. */
+(function(){
+'use strict';
+
+/* ---------- utilitaires ---------- */
+const $ = (s, r=document) => r.querySelector(s);
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nf0 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:0});
+const nf1 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:1});
+const nf2 = new Intl.NumberFormat('fr-FR',{maximumFractionDigits:2});
+const fcfa = v => nf0.format(Math.round(v||0)) + ' F';
+const qty = v => nf2.format(v||0);
+const today = () => { const d=new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset()); return d.toISOString().slice(0,10); };
+const addDays = (iso,n) => { const d=new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+const daysBetween = (a,b) => Math.round((new Date(b+'T12:00:00') - new Date(a+'T12:00:00'))/864e5);
+const fdate = iso => iso ? new Date(iso+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+const MOIS = ['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+const num = v => { if (v===''||v==null) return 0; const n = parseFloat(String(v).replace(/\s/g,'').replace(',','.')); return isFinite(n)?n:0; };
+function toast(t){ document.querySelectorAll('.toast').forEach(x=>x.remove()); const d=document.createElement('div'); d.className='toast'; d.textContent=t; document.body.appendChild(d); setTimeout(()=>d.remove(),2600); }
+function csvDownload(name, rows){
+  const s = rows.map(r => r.map(v => { v = v==null?'':String(v); return /[;"\n]/.test(v) ? '"'+v.replace(/"/g,'""')+'"' : v; }).join(';')).join('\r\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob(['﻿'+s],{type:'text/csv;charset=utf-8'})); a.download=name; document.body.appendChild(a); a.click(); a.remove();
+}
+function parseCSV(text){
+  const sep = (text.split('\n')[0].match(/;/g)||[]).length >= (text.split('\n')[0].match(/,/g)||[]).length ? ';' : ',';
+  const rows=[]; let row=[], cur='', q=false;
+  for (let i=0;i<text.length;i++){ const c=text[i];
+    if (q){ if (c==='"'){ if (text[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=c; }
+    else if (c==='"') q=true; else if (c===sep){ row.push(cur); cur=''; }
+    else if (c==='\n'){ row.push(cur.replace(/\r$/,'')); rows.push(row); row=[]; cur=''; } else cur+=c; }
+  if (cur!==''||row.length){ row.push(cur.replace(/\r$/,'')); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim()!==''));
+}
+
+/* ---------- paramètres par défaut ---------- */
+const DEFAULTS = {
+  categories: ['Pièces moteur et transmission','Courroies et chaînes','Roulements et paliers','Pièces d\'usure (filières, couteaux, hélices, marteaux)','Électricité et automatisme','Hydraulique et graissage','Pneumatiques et pièces engins','Four et cuisson','Outillage','Matériel de production','Consommables (huiles, graisses, filtres)','Équipements de protection'],
+  emplacements: ['Magasin ancienne usine','Magasin nouvelle usine','Atelier','Bureau'],
+  unites: ['pièce','jeu','kit','m','kg','litre','rouleau','boîte'],
+  motifsSortie: ['Usure','Casse / panne','Maintenance préventive','Consommation courante','Transfert vers un autre magasin','Perte / vol','Retour fournisseur'],
+  motifsEntree: ['Achat','Retour de réparation','Transfert depuis un autre magasin','Don / récupération'],
+  horizonJours: 180, couvertureJours: 90, alerteJours: 30
+};
+const NON_CONSO = ['Transfert vers un autre magasin','Retour fournisseur'];
+const TYPES = {piece:'Pièce de rechange', materiel:'Matériel / outillage', conso:'Consommable'};
+const USINES = ['Ancienne usine','Nouvelle usine','Les deux usines'];
+
+/* ---------- état ---------- */
+const S = { user:null, role:'lecture', arts:[], mvts:[], eqs:[], cfg:{...DEFAULTS}, view:'dash', q:'', filt:{}, horizon:null, loaded:{a:0,m:0,e:0} };
+let db, FV;
+const canWrite = () => S.role==='admin' || S.role==='utilisateur';
+const isAdmin = () => S.role==='admin';
+
+/* ---------- connexion (mêmes comptes que l'ERP) ---------- */
+const ERR = {'auth/invalid-credential':'E-mail ou mot de passe incorrect.','auth/wrong-password':'E-mail ou mot de passe incorrect.','auth/user-not-found':'E-mail ou mot de passe incorrect.','auth/invalid-email':'Adresse e-mail invalide.','auth/too-many-requests':'Trop de tentatives. Patientez quelques minutes.','auth/network-request-failed':'Pas de connexion internet.','auth/user-disabled':'Ce compte est désactivé.'};
+const emsg = e => ERR[e&&e.code] || ('Erreur : '+((e&&e.message)||e));
+function loginScreen(auth){
+  return new Promise(res => {
+    const o=document.createElement('div'); o.className='login';
+    o.innerHTML=`<form><h1>Stock Nature Brique</h1><p class="hint">Matériel et pièces de rechange. Connectez-vous avec votre compte de la plateforme ERP.</p>
+      <label class="f">Adresse e-mail<input class="in" name="e" type="email" autocomplete="username" required></label>
+      <label class="f">Mot de passe<input class="in" name="p" type="password" autocomplete="current-password" required></label>
+      <div class="err" role="alert"></div><button class="btn primary" type="submit">Se connecter</button>
+      <button type="button" class="lnk">Mot de passe oublié ?</button></form>`;
+    document.body.appendChild(o);
+    const f=o.querySelector('form'), er=o.querySelector('.err');
+    f.onsubmit=async ev=>{ev.preventDefault(); er.textContent='';
+      try{ const c=await auth.signInWithEmailAndPassword(f.e.value.trim(), f.p.value); o.remove(); res(c.user);}catch(e){er.textContent=emsg(e);} };
+    o.querySelector('.lnk').onclick=async()=>{ er.textContent='';
+      if(!f.e.value.trim()){er.textContent="Saisissez d'abord votre adresse e-mail.";return;}
+      try{ await auth.sendPasswordResetEmail(f.e.value.trim()); er.style.color='inherit'; er.textContent='E-mail de réinitialisation envoyé.'; }catch(e){er.textContent=emsg(e);} };
+  });
+}
+function denied(auth, text){
+  const o=document.createElement('div'); o.className='login';
+  o.innerHTML=`<div class="box"><h1>Accès non autorisé</h1><p>${esc(text)}</p><button class="btn primary" type="button">Se déconnecter</button></div>`;
+  document.body.appendChild(o); o.querySelector('button').onclick=()=>auth.signOut().then(()=>location.reload());
+}
+async function start(){
+  const cfg = window.FIREBASE_CONFIG;
+  firebase.initializeApp(cfg);
+  const auth=firebase.auth(); db=firebase.firestore(); FV=firebase.firestore.FieldValue;
+  let user = await new Promise(r=>{const un=auth.onAuthStateChanged(u=>{un();r(u);});});
+  if(!user) user=await loginScreen(auth);
+  let rec=null; try{ const s=await db.doc('utilisateurs/'+user.uid).get(); rec=s.exists?s.data():null; }catch(e){}
+  if(!rec && ['kidjo.franck@naturebrique.com','franck.kidjo@naturebrique.com'].includes((user.email||'').toLowerCase())) rec={nom:'Franck Victor KIDJO', role:'admin', actif:true};
+  if(!rec) return denied(auth,"Votre compte ("+user.email+") n'est pas enregistré dans la liste des utilisateurs. Un administrateur peut l'ajouter depuis l'ERP.");
+  if(rec.actif===false) return denied(auth,"Votre accès a été désactivé par un administrateur de Nature Brique.");
+  S.user={uid:user.uid, email:user.email, nom:rec.nom||user.email}; S.role=rec.role||'lecture';
+  S.signOut=()=>auth.signOut().then(()=>location.reload());
+  boot();
+}
+
+/* ---------- données temps réel ---------- */
+function boot(){
+  $('#who').textContent = S.user.nom + ' · ' + ({admin:'administrateur',utilisateur:'utilisateur',lecture:'lecture seule'}[S.role]||S.role);
+  $('#logout').onclick = S.signOut;
+  const fail = e => { $('#sync').textContent='Connexion perdue : '+(e.code||e.message);
+    if(e.code==='permission-denied'){ S.denied=1; } render(); };
+  S.deniedHTML='<div class="banner crit"><b>Accès aux données du stock refusé.</b> Les règles Firestore du stock ne sont pas encore publiées dans la console Firebase (voir le guide d\'installation, étape 1), ou votre compte n\'est pas actif.</div>';
+  db.collection('stock_articles').onSnapshot(s=>{ S.arts=s.docs.map(d=>({id:d.id,...d.data()})); S.loaded.a=1; render(); }, fail);
+  db.collection('stock_mouvements').onSnapshot(s=>{ S.mvts=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=> (b.date||'').localeCompare(a.date||'') || (b.ts||0)-(a.ts||0)); S.loaded.m=1; render(); }, fail);
+  db.collection('stock_equipements').onSnapshot(s=>{ S.eqs=s.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(a.nom||'').localeCompare(b.nom||'')); S.loaded.e=1; render(); }, fail);
+  db.doc('stock_config/params').onSnapshot(s=>{ S.cfg={...DEFAULTS,...(s.exists?s.data():{})}; render(); }, fail);
+  document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+  $('#menu').onclick=()=>$('.rail').classList.toggle('open');
+  const h=location.hash.slice(1); if(VIEWS[h]) S.view=h;
+  window.addEventListener('hashchange',()=>{const v=location.hash.slice(1); if(VIEWS[v]&&v!==S.view){S.view=v;render();}});
+}
+function go(v){ S.view=v; S.q=''; location.hash=v; $('.rail').classList.remove('open'); render(); window.scrollTo(0,0); }
+
+/* ---------- calculs d'analyse ---------- */
+const artById = id => S.arts.find(a=>a.id===id);
+const eqById = id => S.eqs.find(e=>e.id===id);
+function analyse(horizon){
+  horizon = horizon || S.horizon || S.cfg.horizonJours || 180;
+  const t=today(), from=addDays(t,-horizon);
+  const res = {};
+  for (const a of S.arts){ res[a.id]={a, qOut:0, n:0, val:0, first:null, byEq:{}, dates:[]}; }
+  for (const m of S.mvts){
+    if (m.type!=='sortie' || NON_CONSO.includes(m.motif)) continue;
+    const r=res[m.articleId]; if(!r) continue;
+    if (!r.first || m.date<r.first) r.first=m.date;
+    (r.byEq[m.equipementId||'_']=r.byEq[m.equipementId||'_']||[]).push(m.date);
+    if (m.date<from || m.date>t) continue;
+    r.qOut+=num(m.quantite); r.n++; r.val+=num(m.quantite)*(num(m.prixUnitaire)||num(r.a.prixUnitaire));
+  }
+  const cov = num(S.cfg.couvertureJours)||90, alerte=num(S.cfg.alerteJours)||30;
+  for (const id in res){ const r=res[id], a=r.a;
+    // période observée : depuis la 1re sortie si elle est récente (30 jours minimum)
+    let span=horizon; if (r.first && r.first>from) span=Math.max(30, daysBetween(r.first,t)+1);
+    r.cj = r.qOut/span;                       // consommation moyenne par jour
+    r.cm = r.cj*30;                           // par mois
+    const q=num(a.quantite), delai=num(a.delaiJours)||0, smin=num(a.stockMin);
+    r.q=q; r.autonomie = r.cj>0 ? q/r.cj : Infinity;
+    r.rupture = r.cj>0 ? addDays(t, Math.floor(r.autonomie)) : null;
+    r.pointCmd = r.cj*delai + smin;
+    r.suggere = Math.max(0, Math.ceil(r.cj*(delai+cov) + smin - q));
+    if (r.suggere===0 && q<=smin && smin>0) r.suggere=Math.ceil(smin*2-q);
+    // intervalle moyen entre deux remplacements (par équipement)
+    const ivals=[];
+    for (const eq in r.byEq){ if(eq==='_') continue; const ds=[...new Set(r.byEq[eq])].sort(); for(let i=1;i<ds.length;i++) ivals.push(daysBetween(ds[i-1],ds[i])); }
+    r.intervalle = ivals.length ? ivals.reduce((s,x)=>s+x,0)/ivals.length : null;
+    r.prochains = [];
+    if (r.intervalle){ for (const eq in r.byEq){ if(eq==='_') continue; const ds=[...new Set(r.byEq[eq])].sort(); if(ds.length>=2){ r.prochains.push({eq, date:addDays(ds[ds.length-1], Math.round(r.intervalle))}); } } }
+    if (a.actif===false) r.statut='inactif';
+    else if (q<=0 && (r.cj>0 || smin>0)) r.statut='rupture';
+    else if (q<=r.pointCmd && (r.cj>0||smin>0)) r.statut='commander';
+    else if (r.cj>0 && r.autonomie < delai+alerte) r.statut='bientot';
+    else r.statut='ok';
+  }
+  // classement ABC sur la valeur consommée
+  const list=Object.values(res).filter(r=>r.val>0).sort((x,y)=>y.val-x.val);
+  const tot=list.reduce((s,r)=>s+r.val,0); let cum=0;
+  for (const r of list){ cum+=r.val; r.abc = cum/tot<=0.8 || r===list[0] ? 'A' : cum/tot<=0.95 ? 'B' : 'C'; }
+  return {res, horizon, from, to:t, totVal:tot};
+}
+const STAT = { rupture:['crit','Rupture'], commander:['crit','À commander'], bientot:['warn','Bientôt'], ok:['good','OK'], inactif:['','Inactif'] };
+const statPill = s => `<span class="pill ${STAT[s][0]}">${STAT[s][1]}</span>`;
+
+/* ---------- graphiques simples ---------- */
+function hbars(items, fmt){
+  if(!items.length) return '<p class="empty">Pas encore de données sur la période.</p>';
+  const mx=Math.max(...items.map(i=>i.v))||1;
+  return '<div class="bars">'+items.map(i=>`<div class="hbar" title="${esc(i.l)} : ${esc(fmt(i.v))}"><span class="lab">${esc(i.l)}</span><span class="trk"><i style="width:${Math.max(1,i.v/mx*100)}%"></i></span><span class="v">${esc(fmt(i.v))}</span></div>`).join('')+'</div>';
+}
+function vbars(items, fmt){
+  const mx=Math.max(...items.map(i=>i.v))||1;
+  return `<div class="vbars">${items.map(i=>`<div class="c" title="${esc(i.l)} : ${esc(fmt(i.v))}"><small>${i.v?esc(fmt(i.v)):''}</small><i style="height:${i.v/mx*100}%"></i></div>`).join('')}</div><div class="vlabs">${items.map(i=>`<span>${esc(i.l)}</span>`).join('')}</div>`;
+}
+const kfmt = v => v>=1e6 ? nf1.format(v/1e6)+' M' : v>=1e3 ? nf0.format(v/1e3)+' k' : nf0.format(v);
+
+/* ---------- vues ---------- */
+const VIEWS = {};
+function render(){
+  if(S.denied){ $('#view').innerHTML=S.deniedHTML; return; }
+  if(!S.loaded.a||!S.loaded.m||!S.loaded.e){ $('#view').innerHTML='<p class="empty">Chargement…</p>'; return; }
+  $('#sync').textContent='Synchronisé';
+  const A=analyse(); S.A=A;
+  const nCmd=Object.values(A.res).filter(r=>r.statut==='rupture'||r.statut==='commander').length;
+  const c=$('#cnt-cmd'); c.textContent=nCmd||''; c.className='count'+(nCmd?' alert':'');
+  $('#cnt-art').textContent=S.arts.filter(a=>a.actif!==false).length;
+  document.querySelectorAll('.nav button').forEach(b=>b.setAttribute('aria-current', b.dataset.v===S.view?'page':'false'));
+  document.querySelectorAll('.w-only').forEach(e=>e.hidden=!canWrite());
+  const act=document.activeElement, keep = act && act.id==='q' ? act.selectionStart : null;
+  $('#view').innerHTML = VIEWS[S.view](A);
+  if (VIEWS[S.view].after) VIEWS[S.view].after(A);
+  if (keep!=null){ const q=$('#q'); if(q){ q.focus(); q.setSelectionRange(keep,keep);} }
+}
+function header(t, sub, actions=''){ return `<div class="vh"><div><h1>${t}</h1>${sub?`<p class="sub">${sub}</p>`:''}</div><div class="row noprint">${actions}</div></div>`; }
+const wBtn = (label, act, cls='primary') => canWrite() ? `<button class="btn ${cls}" data-act="${act}">${label}</button>` : '';
+
+/* Tableau de bord */
+VIEWS.dash = A => {
+  const R=Object.values(A.res).filter(r=>r.a.actif!==false);
+  const val=R.reduce((s,r)=>s+r.q*num(r.a.prixUnitaire),0);
+  const rup=R.filter(r=>r.statut==='rupture').length, cmd=R.filter(r=>r.statut==='commander').length, bt=R.filter(r=>r.statut==='bientot').length;
+  const top=R.filter(r=>r.qOut>0).sort((x,y)=>y.qOut-x.qOut).slice(0,8).map(r=>({l:r.a.designation,v:r.qOut}));
+  const urg=R.filter(r=>['rupture','commander','bientot'].includes(r.statut)).sort((x,y)=>x.autonomie-y.autonomie).slice(0,8);
+  const prev=[]; for(const r of R) for(const p of r.prochains) if(p.date<=addDays(A.to,S.cfg.alerteJours||30)) prev.push({r,p});
+  prev.sort((x,y)=>x.p.date.localeCompare(y.p.date));
+  return header('Tableau de bord', `Stock du matériel et des pièces de rechange · analyse sur ${A.horizon} jours`,
+    wBtn('+ Sortie','sortie')+wBtn('+ Entrée','entree','')) +
+  (S.arts.length===0 ? `<div class="banner info">Le stock est vide. ${isAdmin()?'Commencez par <b>Paramètres → Créer la liste de départ</b> (catégories et équipements types), puis ajoutez vos articles un par un ou importez-les depuis un fichier CSV dans <b>Articles</b>.':'Un administrateur doit d\'abord créer les articles.'}</div>`:'') +
+  `<div class="kpis">
+    <div class="kpi"><b>${nf0.format(R.length)}</b><span>articles suivis</span></div>
+    <div class="kpi"><b>${kfmt(val)}</b><span>valeur du stock (F CFA)</span></div>
+    <div class="kpi ${rup?'crit':''}"><b>${rup}</b><span>en rupture</span></div>
+    <div class="kpi ${cmd?'crit':''}"><b>${cmd}</b><span>à commander</span></div>
+    <div class="kpi ${bt?'warn':''}"><b>${bt}</b><span>bientôt à commander</span></div>
+    <div class="kpi"><b>${kfmt(A.totVal)}</b><span>consommé sur ${A.horizon} j (F CFA)</span></div>
+  </div>
+  <div class="cols">
+    <div class="card"><div class="card-h"><h2>À traiter en priorité</h2><button class="btn sm ghost" data-go="commandes">Liste à commander →</button></div>
+      ${urg.length?`<div class="tw"><table><thead><tr><th>Article</th><th class="r">Stock</th><th class="r">Autonomie</th><th>État</th></tr></thead><tbody>${urg.map(r=>`<tr class="click" data-art="${r.a.id}"><td>${esc(r.a.designation)}<div class="hint mono">${esc(r.a.ref||'')}</div></td><td class="r">${qty(r.q)} ${esc(r.a.unite||'')}</td><td class="r">${autoTxt(r)}</td><td>${statPill(r.statut)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">Aucun article sous son point de commande.</p>'}</div>
+    <div class="card"><div class="card-h"><h2>Pièces les plus utilisées</h2><button class="btn sm ghost" data-go="analyse">Analyse détaillée →</button></div>${hbars(top, v=>qty(v))}</div>
+    <div class="card"><div class="card-h"><h2>Remplacements prévus (${S.cfg.alerteJours||30} prochains jours)</h2></div>
+      ${prev.length?`<div class="tw"><table><thead><tr><th>Date prévue</th><th>Pièce</th><th>Équipement</th><th class="r">Stock</th></tr></thead><tbody>${prev.slice(0,10).map(({r,p})=>`<tr class="click" data-art="${r.a.id}"><td>${p.date<A.to?'<span class="pill warn">dépassée</span> ':''}${fdate(p.date)}</td><td>${esc(r.a.designation)}</td><td>${esc(eqName(p.eq))}</td><td class="r">${qty(r.q)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="empty">Les prévisions apparaissent quand une pièce a été remplacée au moins deux fois sur le même équipement.</p>'}</div>
+    <div class="card"><div class="card-h"><h2>Derniers mouvements</h2><button class="btn sm ghost" data-go="mouvements">Tout voir →</button></div>${mvtTable(S.mvts.slice(0,8), true)}</div>
+  </div>`;
+};
+const personnes = () => [...new Set(S.mvts.map(m=>m.prisPar||m.demandeur).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+const eqName = id => id==='_'||!id ? '—' : (eqById(id)?.nom || 'Équipement supprimé');
+const autoTxt = r => r.cj>0 ? (r.autonomie<1 ? '<1 j' : nf0.format(Math.floor(r.autonomie))+' j') : '<span class="hint">—</span>';
+
+/* Articles */
+VIEWS.articles = A => {
+  const f=S.filt; const q=S.q.toLowerCase();
+  let L=Object.values(A.res).filter(r=>(f.inact? true : r.a.actif!==false)
+    && (!f.type||r.a.type===f.type) && (!f.cat||r.a.categorie===f.cat) && (!f.emp||r.a.emplacement===f.emp)
+    && (!q || [r.a.ref,r.a.designation,r.a.categorie,r.a.fournisseur,r.a.reference_fab].join(' ').toLowerCase().includes(q)));
+  L.sort((x,y)=>(x.a.designation||'').localeCompare(y.a.designation||''));
+  const val=L.reduce((s,r)=>s+r.q*num(r.a.prixUnitaire),0);
+  const opt=(arr,v)=>'<option value="">Tous</option>'+arr.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+  return header('Articles', `${L.length} article(s) · valeur ${fcfa(val)}`,
+    (canWrite()?`<button class="btn" data-act="import">Importer (CSV)</button>`:'')+`<button class="btn" data-act="export-art">Exporter</button>`+wBtn('+ Nouvel article','new-art')) +
+  `<div class="card"><div class="row noprint">
+     <input id="q" class="in grow" style="max-width:320px" placeholder="Rechercher (référence, désignation, fournisseur…)" value="${esc(S.q)}">
+     <select class="in" style="width:auto" data-f="type"><option value="">Tous types</option>${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${f.type===k?'selected':''}>${v}</option>`).join('')}</select>
+     <select class="in" style="width:auto;max-width:240px" data-f="cat">${opt(S.cfg.categories,f.cat).replace('>Tous<','>Toutes catégories<')}</select>
+     <select class="in" style="width:auto" data-f="emp">${opt(S.cfg.emplacements,f.emp).replace('>Tous<','>Tous emplacements<')}</select>
+     <label class="check hint"><input type="checkbox" data-f="inact" ${f.inact?'checked':''}> inactifs</label></div>
+   <div class="tw"><table><thead><tr><th>Réf.</th><th>Désignation</th><th>Catégorie</th><th>Emplacement</th><th class="r">Stock</th><th class="r">Min.</th><th class="r">Conso./mois</th><th class="r">Autonomie</th><th>État</th></tr></thead>
+   <tbody>${L.map(r=>`<tr class="click" data-art="${r.a.id}"><td class="mono">${esc(r.a.ref||'')}</td><td>${esc(r.a.designation)}<div class="hint">${esc(TYPES[r.a.type]||'')}</div></td><td>${esc(r.a.categorie||'')}</td><td>${esc(r.a.emplacement||'')}</td><td class="r"><b>${qty(r.q)}</b> ${esc(r.a.unite||'')}</td><td class="r">${qty(r.a.stockMin)}</td><td class="r">${r.cm?nf1.format(r.cm):'—'}</td><td class="r">${autoTxt(r)}</td><td>${statPill(r.statut)}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">Aucun article.</td></tr>'}</tbody></table></div></div>`;
+};
+
+/* Fiche article */
+VIEWS.fiche = A => {
+  const r=A.res[S.artId]; if(!r) return header('Article introuvable','')+'<button class="btn" data-go="articles">← Articles</button>';
+  const a=r.a; const M=S.mvts.filter(m=>m.articleId===a.id);
+  // consommation mensuelle 12 mois
+  const months=[]; const d=new Date(); d.setDate(1);
+  for(let i=11;i>=0;i--){ const x=new Date(d.getFullYear(), d.getMonth()-i, 1); months.push({k:x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'), l:MOIS[x.getMonth()], v:0}); }
+  for(const m of M) if(m.type==='sortie'&&!NON_CONSO.includes(m.motif)){ const mo=months.find(x=>x.k===(m.date||'').slice(0,7)); if(mo) mo.v+=num(m.quantite); }
+  const byEq={}; for(const m of M) if(m.type==='sortie'&&!NON_CONSO.includes(m.motif)&&m.date>=A.from){ const k=eqName(m.equipementId); byEq[k]=(byEq[k]||0)+num(m.quantite); }
+  return `<div><button class="btn sm ghost noprint" data-go="articles">← Articles</button></div>`+
+  header(esc(a.designation), `<span class="mono">${esc(a.ref||'')}</span> · ${esc(TYPES[a.type]||'')} · ${esc(a.categorie||'')} ${statPill(r.statut)}`,
+    wBtn('Sortie','sortie:'+a.id)+wBtn('Entrée','entree:'+a.id,'')+wBtn('Inventaire','ajust:'+a.id,'')+wBtn('Modifier','edit-art:'+a.id,'')+(isAdmin()?`<button class="btn danger" data-act="del-art:${a.id}">Supprimer</button>`:'')) +
+  `<div class="kpis">
+    <div class="kpi ${r.statut==='rupture'?'crit':''}"><b>${qty(r.q)}</b><span>en stock (${esc(a.unite||'')})</span></div>
+    <div class="kpi"><b>${qty(a.stockMin)}</b><span>stock minimum</span></div>
+    <div class="kpi"><b>${nf1.format(r.pointCmd)}</b><span>point de commande</span></div>
+    <div class="kpi"><b>${r.cm?nf1.format(r.cm):'—'}</b><span>consommation / mois</span></div>
+    <div class="kpi"><b>${r.cj>0?(r.autonomie<1?'<1':nf0.format(Math.floor(r.autonomie)))+' j':'—'}</b><span>autonomie${r.rupture?' · rupture vers le '+fdate(r.rupture):''}</span></div>
+    <div class="kpi"><b>${r.intervalle?nf0.format(r.intervalle)+' j':'—'}</b><span>durée de vie moyenne</span></div>
+  </div>
+  <div class="cols">
+    <div class="card"><h2>Consommation des 12 derniers mois</h2>${vbars(months, v=>qty(v))}</div>
+    <div class="card"><h2>Par équipement (${A.horizon} j)</h2>${hbars(Object.entries(byEq).map(([l,v])=>({l,v})).sort((x,y)=>y.v-x.v), v=>qty(v))}
+      ${r.prochains.length?'<div class="hint">Prochains remplacements prévus : '+r.prochains.map(p=>esc(eqName(p.eq))+' vers le '+fdate(p.date)).join(' · ')+'</div>':''}</div>
+    <div class="card"><h2>Informations</h2><div class="tw"><table><tbody>
+      ${[['Emplacement',a.emplacement],['Unité',a.unite],['Prix unitaire',a.prixUnitaire?fcfa(a.prixUnitaire):''],['Fournisseur habituel',a.fournisseur],['Délai d\'approvisionnement',a.delaiJours?a.delaiJours+' jours':''],['Réf. fabricant',a.reference_fab],['Équipements concernés',(a.equipements||[]).map(eqName).join(', ')],['Quantité conseillée à commander',r.suggere?qty(r.suggere)+' '+(a.unite||''):'—'],['Classe ABC',r.abc||'—'],['Notes',a.notes]].map(([k,v])=>`<tr><td class="hint">${k}</td><td>${esc(v||'—')}</td></tr>`).join('')}
+    </tbody></table></div></div>
+  </div>
+  <div class="card"><h2>Historique des mouvements</h2>${mvtTable(M,false)}</div>`;
+};
+
+/* Mouvements */
+function mvtTable(M, compact){
+  if(!M.length) return '<p class="empty">Aucun mouvement.</p>';
+  const T={entree:['good','Entrée'],sortie:['acc','Sortie'],ajustement:['','Inventaire']};
+  return `<div class="tw"><table><thead><tr><th>Date</th><th>Type</th>${compact?'':'<th>Article</th>'}${compact?'<th>Article</th>':''}<th class="r">Qté</th>${compact?'<th>Pris par</th>':'<th>Pris par</th><th>Motif / raison</th><th>Équipement / fournisseur</th><th>Saisi par</th><th></th>'}</tr></thead><tbody>
+  ${M.map(m=>{const a=artById(m.articleId); const t=T[m.type]||['',m.type]; const sign=m.type==='sortie'?'−':m.type==='entree'?'+':(num(m.quantite)>=0?'+':'');
+    return `<tr><td>${fdate(m.date)}</td><td><span class="pill ${t[0]}">${t[1]}</span></td><td>${a?`<button class="btn sm ghost" style="padding:0" data-art="${a.id}">${esc(a.designation)}</button>`:'<span class="hint">article supprimé</span>'}</td><td class="r">${sign}${qty(Math.abs(num(m.quantite)))}</td>
+    ${compact?`<td>${esc(m.prisPar||m.demandeur||'')}</td>`:`<td>${m.type==='sortie'?`<b>${esc(m.prisPar||m.demandeur||'—')}</b>${m.service?`<div class="hint">${esc(m.service)}</div>`:''}`:''}</td><td>${esc(m.motif||'')}${m.raison?`<div>${esc(m.raison)}</div>`:''}${m.note?`<div class="hint">${esc(m.note)}</div>`:''}</td><td>${esc(m.type==='entree'?[m.fournisseur,m.facture&&('fact. '+m.facture),m.prixUnitaire&&fcfa(m.prixUnitaire)].filter(Boolean).join(' · '):eqName(m.equipementId))}</td><td class="hint">${esc(m.par||'')}</td><td>${isAdmin()?`<button class="btn sm ghost danger" data-act="del-mvt:${m.id}" title="Annuler ce mouvement">✕</button>`:''}</td>`}</tr>`;}).join('')}</tbody></table></div>`;
+}
+VIEWS.mouvements = A => {
+  const f=S.filt; const q=S.q.toLowerCase();
+  const L=S.mvts.filter(m=>(!f.mt||m.type===f.mt)&&(!f.d1||m.date>=f.d1)&&(!f.d2||m.date<=f.d2)&&(!f.eq||m.equipementId===f.eq)&&(!f.pers||(m.prisPar||m.demandeur)===f.pers)&&(!q||[(artById(m.articleId)||{}).designation,(artById(m.articleId)||{}).ref,m.motif,m.raison,m.prisPar,m.demandeur,m.service,m.fournisseur,m.note,m.par].join(' ').toLowerCase().includes(q)));
+  return header('Mouvements', `${L.length} mouvement(s)`, `<button class="btn" data-act="export-mvt">Exporter</button>`+wBtn('+ Sortie','sortie')+wBtn('+ Entrée','entree','')) +
+  `<div class="card"><div class="row noprint">
+    <input id="q" class="in grow" style="max-width:300px" placeholder="Rechercher" value="${esc(S.q)}">
+    <select class="in" style="width:auto" data-f="mt"><option value="">Tous les types</option><option value="sortie" ${f.mt==='sortie'?'selected':''}>Sorties</option><option value="entree" ${f.mt==='entree'?'selected':''}>Entrées</option><option value="ajustement" ${f.mt==='ajustement'?'selected':''}>Inventaires</option></select>
+    <select class="in" style="width:auto;max-width:200px" data-f="pers"><option value="">Toutes les personnes</option>${personnes().map(p=>`<option ${f.pers===p?'selected':''}>${esc(p)}</option>`).join('')}</select>
+    <select class="in" style="width:auto;max-width:220px" data-f="eq"><option value="">Tous équipements</option>${S.eqs.map(e=>`<option value="${e.id}" ${f.eq===e.id?'selected':''}>${esc(e.nom)}</option>`).join('')}</select>
+    <label class="f" style="flex-direction:row;align-items:center">Du <input type="date" class="in" style="width:auto" data-f="d1" value="${esc(f.d1||'')}"></label>
+    <label class="f" style="flex-direction:row;align-items:center">au <input type="date" class="in" style="width:auto" data-f="d2" value="${esc(f.d2||'')}"></label></div>
+  ${mvtTable(L.slice(0,500),false)}${L.length>500?'<p class="hint">500 premiers mouvements affichés — affinez la recherche ou exportez.</p>':''}</div>`;
+};
+
+/* Analyse d'usure */
+VIEWS.analyse = A => {
+  const R=Object.values(A.res).filter(r=>r.a.actif!==false);
+  const used=R.filter(r=>r.qOut>0);
+  const byQ=[...used].sort((x,y)=>y.qOut-x.qOut).slice(0,12).map(r=>({l:r.a.designation,v:r.qOut}));
+  const byN=[...used].sort((x,y)=>y.n-x.n).slice(0,12).map(r=>({l:r.a.designation,v:r.n}));
+  const byV=[...used].sort((x,y)=>y.val-x.val);
+  // par équipement, par motif, par mois
+  const eq={}, mo={}, pers={}; const months=[]; const d=new Date(); d.setDate(1);
+  for(let i=11;i>=0;i--){ const x=new Date(d.getFullYear(), d.getMonth()-i, 1); months.push({k:x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0'), l:MOIS[x.getMonth()]+' '+String(x.getFullYear()).slice(2), v:0}); }
+  for(const m of S.mvts){ if(m.type!=='sortie'||NON_CONSO.includes(m.motif)) continue; const a=artById(m.articleId); if(!a) continue;
+    const v=num(m.quantite)*(num(m.prixUnitaire)||num(a.prixUnitaire));
+    const mm=months.find(x=>x.k===(m.date||'').slice(0,7)); if(mm) mm.v+=v;
+    if(m.date<A.from) continue;
+    const k=eqName(m.equipementId); eq[k]=(eq[k]||0)+v; const pk=m.prisPar||m.demandeur||'Non renseigné'; pers[pk]=(pers[pk]||0)+v; mo[m.motif||'Non précisé']=(mo[m.motif||'Non précisé']||0)+num(m.quantite); }
+  const per = [90,180,365].map(h=>`<button aria-pressed="${A.horizon===h}" data-h="${h}">${h===365?'12 mois':h===180?'6 mois':'3 mois'}</button>`).join('');
+  return header("Analyse d'usure", `Sorties pour usure, casse, maintenance et consommation · du ${fdate(A.from)} au ${fdate(A.to)}`, `<div class="seg">${per}</div><button class="btn" data-act="export-ana">Exporter</button><button class="btn" onclick="print()">Imprimer</button>`) +
+  (used.length?'':'<div class="banner info">L\'analyse se remplit au fur et à mesure que les sorties de pièces sont enregistrées, avec leur motif et l\'équipement concerné.</div>') +
+  `<div class="cols">
+    <div class="card"><h2>Pièces les plus consommées (quantité)</h2>${hbars(byQ, v=>qty(v))}</div>
+    <div class="card"><h2>Pièces les plus souvent remplacées (nombre de sorties)</h2>${hbars(byN, v=>nf0.format(v)+'×')}</div>
+    <div class="card"><h2>Coût des pièces par équipement (F CFA)</h2>${hbars(Object.entries(eq).map(([l,v])=>({l,v})).sort((x,y)=>y.v-x.v).slice(0,12), fcfa)}</div>
+    <div class="card"><h2>Sorties par motif (quantité)</h2>${hbars(Object.entries(mo).map(([l,v])=>({l,v})).sort((x,y)=>y.v-x.v), v=>qty(v))}</div>
+    <div class="card"><h2>Valeur des pièces sorties par personne (F CFA)</h2>${hbars(Object.entries(pers).map(([l,v])=>({l,v})).sort((x,y)=>y.v-x.v).slice(0,12), fcfa)}</div>
+  </div>
+  <div class="card"><h2>Coût mensuel des pièces consommées (F CFA, 12 mois)</h2>${vbars(months,kfmt)}</div>
+  <div class="card"><div class="card-h"><h2>Classement ABC et prévisions</h2><span class="hint">A = pièces qui font 80 % du coût : à suivre de près et à toujours avoir en stock</span></div>
+   <div class="tw"><table><thead><tr><th>ABC</th><th>Article</th><th class="r">Consommé</th><th class="r">Sorties</th><th class="r">Coût</th><th class="r">Conso./mois</th><th class="r">Durée de vie moy.</th><th class="r">Stock</th><th class="r">Autonomie</th><th>Rupture prévue</th><th>État</th></tr></thead>
+   <tbody>${byV.map(r=>`<tr class="click" data-art="${r.a.id}"><td><span class="pill ${r.abc==='A'?'crit':r.abc==='B'?'warn':''}">${r.abc}</span></td><td>${esc(r.a.designation)}</td><td class="r">${qty(r.qOut)}</td><td class="r">${r.n}</td><td class="r">${fcfa(r.val)}</td><td class="r">${nf1.format(r.cm)}</td><td class="r">${r.intervalle?nf0.format(r.intervalle)+' j':'—'}</td><td class="r">${qty(r.q)}</td><td class="r">${autoTxt(r)}</td><td>${r.rupture?fdate(r.rupture):'—'}</td><td>${statPill(r.statut)}</td></tr>`).join('')||'<tr><td colspan="11" class="empty">Aucune sortie sur la période.</td></tr>'}</tbody></table></div>
+   <p class="hint">Le coût utilise le prix saisi à la sortie, sinon le prix unitaire de l'article. La durée de vie moyenne est l'écart moyen entre deux remplacements d'une même pièce sur un même équipement.</p></div>`;
+};
+VIEWS.analyse.after = () => document.querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>{S.horizon=+b.dataset.h; render();});
+
+/* À commander */
+VIEWS.commandes = A => {
+  const L=Object.values(A.res).filter(r=>['rupture','commander','bientot'].includes(r.statut)).sort((x,y)=>(x.statut==='bientot')-(y.statut==='bientot')||x.autonomie-y.autonomie);
+  const tot=L.reduce((s,r)=>s+r.suggere*num(r.a.prixUnitaire),0);
+  const byF={}; for(const r of L){ const f=r.a.fournisseur||'Fournisseur non renseigné'; (byF[f]=byF[f]||[]).push(r); }
+  return header('À commander', `Prévision d'approvisionnement · couverture visée : ${S.cfg.couvertureJours} jours après livraison · budget estimé ${fcfa(tot)}`, `<button class="btn" data-act="export-cmd">Exporter</button><button class="btn" onclick="print()">Imprimer</button>`) +
+  `<div class="banner info noprint">Point de commande = consommation par jour × délai d'approvisionnement + stock minimum. Quantité conseillée = de quoi couvrir le délai plus ${S.cfg.couvertureJours} jours, en gardant le stock minimum.</div>`+
+  (L.length? Object.entries(byF).sort().map(([f,rs])=>`<div class="card"><div class="card-h"><h2>${esc(f)}</h2><span class="hint">${rs.length} article(s) · ${fcfa(rs.reduce((s,r)=>s+r.suggere*num(r.a.prixUnitaire),0))}</span></div>
+    <div class="tw"><table><thead><tr><th>Réf.</th><th>Article</th><th class="r">Stock</th><th class="r">Point de cde</th><th class="r">Conso./mois</th><th class="r">Délai</th><th>Rupture prévue</th><th class="r">Qté conseillée</th><th class="r">Montant</th><th>État</th></tr></thead>
+    <tbody>${rs.map(r=>`<tr class="click" data-art="${r.a.id}"><td class="mono">${esc(r.a.ref||'')}</td><td>${esc(r.a.designation)}</td><td class="r">${qty(r.q)} ${esc(r.a.unite||'')}</td><td class="r">${nf1.format(r.pointCmd)}</td><td class="r">${r.cm?nf1.format(r.cm):'—'}</td><td class="r">${r.a.delaiJours?r.a.delaiJours+' j':'—'}</td><td>${r.rupture?fdate(r.rupture):(r.q<=0?'déjà':'—')}</td><td class="r"><b>${qty(r.suggere)}</b></td><td class="r">${r.a.prixUnitaire?fcfa(r.suggere*num(r.a.prixUnitaire)):'—'}</td><td>${statPill(r.statut)}</td></tr>`).join('')}</tbody></table></div></div>`).join('')
+   : '<div class="card"><p class="empty">Rien à commander pour l\'instant.</p></div>');
+};
+
+/* Inventaire */
+VIEWS.inventaire = A => {
+  const emp=S.filt.iemp||''; const L=S.arts.filter(a=>a.actif!==false&&(!emp||a.emplacement===emp)).sort((x,y)=>(x.categorie||'').localeCompare(y.categorie||'')||(x.designation||'').localeCompare(y.designation||''));
+  return header('Inventaire', 'Comptage physique : saisissez la quantité comptée, l\'écart est enregistré comme mouvement d\'inventaire.', `<button class="btn" onclick="print()">Imprimer la feuille de comptage</button>`+(canWrite()?`<button class="btn primary" data-act="save-inv">Enregistrer les écarts</button>`:'')) +
+  `<div class="card"><div class="row noprint"><select class="in" style="width:auto" data-f="iemp"><option value="">Tous emplacements</option>${S.cfg.emplacements.map(e=>`<option ${e===emp?'selected':''}>${esc(e)}</option>`).join('')}</select><span class="hint">Laissez vide les articles non comptés.</span></div>
+  <div class="tw"><table><thead><tr><th>Réf.</th><th>Article</th><th>Catégorie</th><th>Emplacement</th><th class="r">Stock théorique</th><th class="r">Compté</th><th class="r">Écart</th></tr></thead>
+  <tbody>${L.map(a=>`<tr><td class="mono">${esc(a.ref||'')}</td><td>${esc(a.designation)}</td><td>${esc(a.categorie||'')}</td><td>${esc(a.emplacement||'')}</td><td class="r">${qty(a.quantite)} ${esc(a.unite||'')}</td><td class="r"><input class="in r inv" style="width:96px" inputmode="decimal" data-id="${a.id}" ${canWrite()?'':'disabled'}></td><td class="r ecart" data-for="${a.id}"></td></tr>`).join('')||'<tr><td colspan="7" class="empty">Aucun article.</td></tr>'}</tbody></table></div></div>`;
+};
+VIEWS.inventaire.after = () => document.querySelectorAll('.inv').forEach(i=>i.oninput=()=>{ const a=artById(i.dataset.id); const c=$(`.ecart[data-for="${i.dataset.id}"]`); if(i.value.trim()===''){c.textContent='';return;} const e=num(i.value)-num(a.quantite); c.innerHTML= e===0?'<span class="pill good">0</span>':`<span class="pill ${e<0?'crit':'warn'}">${e>0?'+':''}${qty(e)}</span>`; });
+
+/* Équipements */
+VIEWS.equipements = A => {
+  const cost={}, cnt={}; for(const m of S.mvts){ if(m.type!=='sortie'||!m.equipementId||NON_CONSO.includes(m.motif)||m.date<A.from) continue; const a=artById(m.articleId); cost[m.equipementId]=(cost[m.equipementId]||0)+num(m.quantite)*(num(m.prixUnitaire)||num(a?.prixUnitaire)); cnt[m.equipementId]=(cnt[m.equipementId]||0)+1; }
+  return header('Équipements', 'Machines, engins et fours sur lesquels les pièces sont montées', isAdmin()?`<button class="btn primary" data-act="new-eq">+ Nouvel équipement</button>`:'') +
+  `<div class="card"><div class="tw"><table><thead><tr><th>Code</th><th>Équipement</th><th>Usine</th><th>Type</th><th class="r">Sorties (${A.horizon} j)</th><th class="r">Coût pièces (${A.horizon} j)</th><th></th></tr></thead>
+  <tbody>${S.eqs.map(e=>`<tr><td class="mono">${esc(e.code||'')}</td><td>${esc(e.nom)}</td><td>${esc(e.usine||'')}</td><td>${esc(e.type||'')}</td><td class="r">${cnt[e.id]||0}</td><td class="r">${fcfa(cost[e.id]||0)}</td><td>${isAdmin()?`<button class="btn sm ghost" data-act="edit-eq:${e.id}">Modifier</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">Aucun équipement.</td></tr>'}</tbody></table></div></div>`;
+};
+
+/* Paramètres */
+VIEWS.parametres = A => {
+  const c=S.cfg; const ta=(k,l)=>`<label class="f">${l}<textarea class="in" rows="5" data-p="${k}" ${isAdmin()?'':'disabled'}>${esc((c[k]||[]).join('\n'))}</textarea></label>`;
+  return header('Paramètres', 'Listes et règles de calcul (une valeur par ligne)', isAdmin()?`<button class="btn primary" data-act="save-cfg">Enregistrer</button>`:'') +
+  (isAdmin()?'':'<div class="banner">Seuls les administrateurs peuvent modifier les paramètres.</div>')+
+  `<div class="card"><h2>Règles de calcul</h2><div class="grid2">
+    <label class="f">Période d'analyse par défaut (jours)<input class="in r" data-pn="horizonJours" value="${c.horizonJours}" ${isAdmin()?'':'disabled'}></label>
+    <label class="f">Couverture visée après livraison (jours)<input class="in r" data-pn="couvertureJours" value="${c.couvertureJours}" ${isAdmin()?'':'disabled'}></label>
+    <label class="f">Alerte « bientôt » (jours avant le point de commande)<input class="in r" data-pn="alerteJours" value="${c.alerteJours}" ${isAdmin()?'':'disabled'}></label></div></div>
+  <div class="card"><h2>Listes</h2><div class="grid2">${ta('categories','Catégories')}${ta('emplacements','Emplacements (magasins)')}${ta('unites','Unités')}${ta('motifsSortie','Motifs de sortie')}${ta('motifsEntree','Motifs d\'entrée')}</div>
+   <p class="hint">« Transfert vers un autre magasin » et « Retour fournisseur » ne comptent pas comme consommation dans l'analyse.</p></div>
+  ${isAdmin()?`<div class="card"><h2>Liste de départ</h2><p class="hint">Crée une liste d'équipements types d'une briqueterie (à renommer ou supprimer ensuite). Les catégories types sont déjà proposées ci-dessus.</p><div><button class="btn" data-act="seed">Créer la liste de départ</button></div></div>`:''}
+  <div class="card"><h2>Comptes</h2><p class="hint">Les comptes et les rôles sont ceux de la plateforme ERP : un administrateur les crée et les modifie dans l'ERP. Rôle « lecture » : consultation seule ; « utilisateur » : entrées, sorties, inventaires et articles ; « admin » : tout, y compris suppressions, équipements et paramètres.</p></div>`;
+};
+
+/* ---------- formulaires ---------- */
+function dialog(html, onSubmit){
+  const d=document.createElement('dialog'); d.innerHTML=`<form method="dialog">${html}<div class="err" role="alert"></div><div class="foot"><button type="button" class="btn ghost" data-x>Annuler</button><button type="submit" class="btn primary">Enregistrer</button></div></form>`;
+  document.body.appendChild(d); d.showModal();
+  const f=d.querySelector('form'), er=d.querySelector('.err');
+  d.querySelector('[data-x]').onclick=()=>{d.close();};
+  d.addEventListener('close',()=>d.remove());
+  f.onsubmit=async ev=>{ ev.preventDefault(); er.textContent=''; const b=f.querySelector('[type=submit]'); b.disabled=true;
+    try{ const ok=await onSubmit(f, er); if(ok!==false) d.close(); }catch(e){ er.textContent= e.code==='permission-denied' ? "Action refusée : votre rôle ne le permet pas, ou les règles Firestore du stock ne sont pas encore publiées." : (e.message||String(e)); }
+    b.disabled=false; };
+  return d;
+}
+const opts = (arr, v, empty) => (empty!==undefined?`<option value="">${empty}</option>`:'')+arr.map(x=>`<option ${x===v?'selected':''}>${esc(x)}</option>`).join('');
+const artOptions = sel => S.arts.filter(a=>a.actif!==false).sort((x,y)=>(x.designation||'').localeCompare(y.designation||'')).map(a=>`<option value="${a.id}" ${a.id===sel?'selected':''}>${esc(a.designation)}${a.ref?' ('+esc(a.ref)+')':''} — stock ${qty(a.quantite)}</option>`).join('');
+const eqOptions = (sel) => '<option value="">— Aucun / non précisé —</option>'+S.eqs.map(e=>`<option value="${e.id}" ${e.id===sel?'selected':''}>${esc(e.nom)}${e.usine?' · '+esc(e.usine):''}</option>`).join('');
+
+function formArticle(a){
+  a=a||{type:'piece',unite:'pièce',equipements:[]};
+  dialog(`<h2>${a.id?'Modifier l\'article':'Nouvel article'}</h2><div class="grid2">
+    <label class="f">Référence interne<input class="in" name="ref" value="${esc(a.ref||'')}" placeholder="ex. PR-ROUL-001"></label>
+    <label class="f">Type<select class="in" name="type">${Object.entries(TYPES).map(([k,v])=>`<option value="${k}" ${a.type===k?'selected':''}>${v}</option>`).join('')}</select></label>
+    <label class="f span2">Désignation *<input class="in" name="designation" required value="${esc(a.designation||'')}" placeholder="ex. Roulement 6310 2RS"></label>
+    <label class="f">Catégorie<select class="in" name="categorie">${opts(S.cfg.categories,a.categorie,'—')}</select></label>
+    <label class="f">Emplacement<select class="in" name="emplacement">${opts(S.cfg.emplacements,a.emplacement,'—')}</select></label>
+    <label class="f">Unité<select class="in" name="unite">${opts(S.cfg.unites,a.unite)}</select></label>
+    ${a.id?'':`<label class="f">Stock initial<input class="in r" name="quantite" inputmode="decimal" value="0"></label>`}
+    <label class="f">Stock minimum (sécurité)<input class="in r" name="stockMin" inputmode="decimal" value="${esc(a.stockMin??'')}"></label>
+    <label class="f">Délai d'approvisionnement (jours)<input class="in r" name="delaiJours" inputmode="numeric" value="${esc(a.delaiJours??'')}"></label>
+    <label class="f">Prix unitaire (F CFA)<input class="in r" name="prixUnitaire" inputmode="decimal" value="${esc(a.prixUnitaire??'')}"></label>
+    <label class="f">Fournisseur habituel<input class="in" name="fournisseur" value="${esc(a.fournisseur||'')}"></label>
+    <label class="f">Réf. fabricant<input class="in" name="reference_fab" value="${esc(a.reference_fab||'')}"></label>
+    <label class="f span2">Équipements sur lesquels la pièce est montée<select class="in" name="equipements" multiple size="${Math.min(6,Math.max(3,S.eqs.length))}">${S.eqs.map(e=>`<option value="${e.id}" ${(a.equipements||[]).includes(e.id)?'selected':''}>${esc(e.nom)}</option>`).join('')}</select><span class="hint">Ctrl + clic pour en choisir plusieurs.</span></label>
+    <label class="f span2">Notes<textarea class="in" name="notes">${esc(a.notes||'')}</textarea></label>
+    ${a.id?`<label class="check span2"><input type="checkbox" name="actif" ${a.actif!==false?'checked':''}> Article actif</label>`:''}</div>`,
+  async f=>{
+    const d={ref:f.ref.value.trim(), type:f.type.value, designation:f.designation.value.trim(), categorie:f.categorie.value, emplacement:f.emplacement.value, unite:f.unite.value,
+      stockMin:num(f.stockMin.value), delaiJours:num(f.delaiJours.value), prixUnitaire:num(f.prixUnitaire.value), fournisseur:f.fournisseur.value.trim(), reference_fab:f.reference_fab.value.trim(),
+      equipements:[...f.equipements.selectedOptions].map(o=>o.value), notes:f.notes.value.trim(), majLe:Date.now(), majPar:S.user.nom};
+    if (d.ref && S.arts.some(x=>x.ref===d.ref && x.id!==a.id)) throw new Error('Cette référence existe déjà.');
+    if (a.id){ d.actif=f.actif.checked; await db.collection('stock_articles').doc(a.id).update(d); toast('Article modifié'); }
+    else {
+      const q0=num(f.quantite.value); const ref=db.collection('stock_articles').doc(); const b=db.batch();
+      b.set(ref,{...d, actif:true, quantite:q0, creeLe:Date.now()});
+      if(q0) b.set(db.collection('stock_mouvements').doc(),{type:'ajustement', articleId:ref.id, quantite:q0, date:today(), motif:'Stock initial', par:S.user.nom, uid:S.user.uid, ts:Date.now()});
+      await b.commit(); toast('Article créé'); S.artId=ref.id;
+    }
+  });
+}
+function formMvt(type, artId){
+  const isS=type==='sortie';
+  dialog(`<h2>${isS?'Sortie de stock':'Entrée en stock'}</h2><div class="grid2">
+    <label class="f span2">Article *<select class="in" name="art" required><option value="">— Choisir —</option>${artOptions(artId)}</select></label>
+    <label class="f">Date *<input type="date" class="in" name="date" required value="${today()}" max="${today()}"></label>
+    <label class="f">Quantité *<input class="in r" name="q" inputmode="decimal" required></label>
+    <label class="f">Motif<select class="in" name="motif">${opts(isS?S.cfg.motifsSortie:S.cfg.motifsEntree)}</select></label>
+    ${isS?`<label class="f">Équipement concerné<select class="in" name="eq">${eqOptions()}</select></label>
+           <label class="f">Pris par (nom de la personne) *<input class="in" name="pris" required list="dl-pers" autocomplete="off" placeholder="ex. Koffi, mécanicien"></label>
+           <label class="f">Service / fonction<input class="in" name="serv" list="dl-serv" autocomplete="off" placeholder="ex. maintenance, four, chantier"></label>
+           <label class="f span2">Raison de la sortie *<input class="in" name="raison" required placeholder="ex. remplacement du roulement côté moteur de l'extrudeuse"></label>
+           <datalist id="dl-pers">${personnes().map(p=>`<option value="${esc(p)}">`).join('')}</datalist>
+           <datalist id="dl-serv">${[...new Set(S.mvts.map(m=>m.service).filter(Boolean))].sort().map(p=>`<option value="${esc(p)}">`).join('')}</datalist>`
+         :`<label class="f">Prix unitaire (F CFA)<input class="in r" name="pu" inputmode="decimal"></label>
+           <label class="f">Fournisseur<input class="in" name="fourn"></label>
+           <label class="f">N° de facture / bon<input class="in" name="fact"></label>`}
+    <label class="f span2">Note<input class="in" name="note"></label></div>`,
+  async (f,er)=>{
+    const a=artById(f.art.value); if(!a) throw new Error('Choisissez un article.');
+    const q=num(f.q.value); if(!(q>0)) throw new Error('La quantité doit être positive.');
+    if(isS && q>num(a.quantite)) throw new Error(`Stock insuffisant : il reste ${qty(a.quantite)} ${a.unite||''}. Faites d'abord un inventaire si le stock réel est différent.`);
+    const m={type, articleId:a.id, quantite:q, date:f.date.value, motif:f.motif.value, note:f.note.value.trim(), par:S.user.nom, uid:S.user.uid, ts:Date.now()};
+    if(isS){ m.equipementId=f.eq.value||''; m.prisPar=f.pris.value.trim(); m.service=f.serv.value.trim(); m.raison=f.raison.value.trim(); m.prixUnitaire=num(a.prixUnitaire);
+      if(!m.prisPar) throw new Error('Indiquez le nom de la personne qui prend l\'article.'); if(!m.raison) throw new Error('Indiquez la raison de la sortie.'); }
+    else { m.prixUnitaire=f.pu.value.trim()?num(f.pu.value):num(a.prixUnitaire); m.fournisseur=f.fourn.value.trim(); m.facture=f.fact.value.trim(); }
+    const b=db.batch(); b.set(db.collection('stock_mouvements').doc(), m);
+    const up={quantite:FV.increment(isS?-q:q), majLe:Date.now()};
+    if(!isS && f.pu.value.trim()) up.prixUnitaire=num(f.pu.value);
+    if(!isS && m.fournisseur && !a.fournisseur) up.fournisseur=m.fournisseur;
+    if(isS && m.equipementId && !(a.equipements||[]).includes(m.equipementId)) up.equipements=FV.arrayUnion(m.equipementId);
+    b.update(db.collection('stock_articles').doc(a.id), up); await b.commit();
+    toast(isS?'Sortie enregistrée':'Entrée enregistrée');
+  });
+  setTimeout(()=>{ const d=document.querySelector('dialog [name=' + (artId?'q':'art') + ']'); d&&d.focus(); },50);
+}
+function formAjust(id){
+  const a=artById(id);
+  dialog(`<h2>Inventaire — ${esc(a.designation)}</h2><p class="hint">Stock théorique : ${qty(a.quantite)} ${esc(a.unite||'')}</p><div class="grid2">
+    <label class="f">Quantité comptée *<input class="in r" name="q" inputmode="decimal" required></label><label class="f">Date<input type="date" class="in" name="date" value="${today()}" max="${today()}"></label>
+    <label class="f span2">Note<input class="in" name="note" placeholder="ex. inventaire mensuel"></label></div>`,
+  async f=>{ await ajuster([{a, compte:num(f.q.value)}], f.date.value, f.note.value.trim()); toast('Inventaire enregistré'); });
+}
+async function ajuster(list, date, note){
+  const b=db.batch(); let n=0;
+  for(const {a,compte} of list){ const e=compte-num(a.quantite); if(Math.abs(e)<1e-9) continue; n++;
+    b.set(db.collection('stock_mouvements').doc(),{type:'ajustement', articleId:a.id, quantite:e, date:date||today(), motif:'Inventaire', note:note||'', par:S.user.nom, uid:S.user.uid, ts:Date.now()});
+    b.update(db.collection('stock_articles').doc(a.id),{quantite:FV.increment(e), inventaireLe:date||today(), majLe:Date.now()}); }
+  if(n) await b.commit(); return n;
+}
+function formEq(e){
+  e=e||{};
+  dialog(`<h2>${e.id?'Modifier l\'équipement':'Nouvel équipement'}</h2><div class="grid2">
+    <label class="f">Code<input class="in" name="code" value="${esc(e.code||'')}" placeholder="ex. EXT-N1"></label>
+    <label class="f">Nom *<input class="in" name="nom" required value="${esc(e.nom||'')}" placeholder="ex. Extrudeuse nouvelle usine"></label>
+    <label class="f">Usine<select class="in" name="usine">${opts(USINES,e.usine,'—')}</select></label>
+    <label class="f">Type<input class="in" name="type" value="${esc(e.type||'')}" placeholder="ex. Production, Engin, Four, Énergie"></label>
+    <label class="f span2">Notes<input class="in" name="notes" value="${esc(e.notes||'')}"></label></div>
+    ${e.id?`<button type="button" class="btn danger" data-del style="align-self:flex-start">Supprimer cet équipement</button>`:''}`,
+  async f=>{ const d={code:f.code.value.trim(), nom:f.nom.value.trim(), usine:f.usine.value, type:f.type.value.trim(), notes:f.notes.value.trim()};
+    if(e.id) await db.collection('stock_equipements').doc(e.id).update(d); else await db.collection('stock_equipements').add(d); toast('Équipement enregistré'); });
+  const del=document.querySelector('dialog [data-del]');
+  if(del) del.onclick=async()=>{ if(!confirm('Supprimer cet équipement ? Les mouvements passés restent enregistrés.')) return; await db.collection('stock_equipements').doc(e.id).delete(); document.querySelector('dialog').close(); toast('Équipement supprimé'); };
+}
+function formImport(){
+  const d=dialog(`<h2>Importer des articles (CSV)</h2>
+    <p class="hint">Fichier CSV (Excel : Enregistrer sous → CSV point-virgule) avec une ligne d'en-tête. Colonnes reconnues : <span class="mono">reference ; designation ; type ; categorie ; emplacement ; unite ; stock ; stock_min ; delai_jours ; prix_unitaire ; fournisseur ; ref_fabricant</span>. Seule la désignation est obligatoire. Type : piece, materiel ou conso. Une référence déjà existante est ignorée.</p>
+    <div class="row"><button type="button" class="btn sm" data-tpl>Télécharger le modèle</button></div>
+    <input type="file" class="in" name="file" accept=".csv,text/csv" required><div class="hint" data-prev></div>`,
+  async (f,er)=>{
+    const rows=parseCSV(await f.file.files[0].text()); if(rows.length<2) throw new Error('Fichier vide.');
+    const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z]/g,'');
+    const H=rows[0].map(norm); const ix=(...k)=>H.findIndex(h=>k.includes(h));
+    const c={ref:ix('reference','ref','refinterne'), des:ix('designation','libelle','article'), type:ix('type'), cat:ix('categorie'), emp:ix('emplacement','magasin'), un:ix('unite'), q:ix('stock','quantite','qte'), min:ix('stockmin','minimum','stockminimum'), del:ix('delaijours','delai'), pu:ix('prixunitaire','prix'), fo:ix('fournisseur'), rf:ix('reffabricant','referencefabricant')};
+    if(c.des<0) throw new Error('Colonne « designation » introuvable.');
+    const v=(r,i)=>i>=0?(r[i]||'').trim():''; const tmap=t=>{t=norm(t); return t.startsWith('mat')?'materiel':t.startsWith('con')?'conso':'piece';};
+    const refs=new Set(S.arts.map(a=>a.ref).filter(Boolean)); let n=0, skip=0; let b=db.batch(), ops=0;
+    for(const r of rows.slice(1)){ const des=v(r,c.des); if(!des){continue;} const ref=v(r,c.ref); if(ref&&refs.has(ref)){skip++;continue;} if(ref) refs.add(ref);
+      const q0=num(v(r,c.q)); const id=db.collection('stock_articles').doc();
+      b.set(id,{ref, designation:des, type:tmap(v(r,c.type)), categorie:v(r,c.cat), emplacement:v(r,c.emp), unite:v(r,c.un)||'pièce', quantite:q0, stockMin:num(v(r,c.min)), delaiJours:num(v(r,c.del)), prixUnitaire:num(v(r,c.pu)), fournisseur:v(r,c.fo), reference_fab:v(r,c.rf), equipements:[], notes:'', actif:true, creeLe:Date.now(), majPar:S.user.nom}); ops++;
+      if(q0){ b.set(db.collection('stock_mouvements').doc(),{type:'ajustement', articleId:id.id, quantite:q0, date:today(), motif:'Stock initial (import)', par:S.user.nom, uid:S.user.uid, ts:Date.now()}); ops++; }
+      n++; if(ops>=400){ await b.commit(); b=db.batch(); ops=0; } }
+    if(ops) await b.commit(); toast(`${n} article(s) importé(s)${skip?`, ${skip} ignoré(s) (référence existante)`:''}`);
+  });
+  d.querySelector('[data-tpl]').onclick=()=>csvDownload('modele_import_stock.csv',[['reference','designation','type','categorie','emplacement','unite','stock','stock_min','delai_jours','prix_unitaire','fournisseur','ref_fabricant'],['PR-ROUL-001','Roulement 6310 2RS','piece',S.cfg.categories[2]||'','Magasin nouvelle usine','pièce','4','2','15','12500','','6310-2RS']]);
+}
+
+/* ---------- actions ---------- */
+async function act(a){
+  const [k,id]=a.split(':');
+  if(k==='new-art') return formArticle();
+  if(k==='edit-art') return formArticle(artById(id));
+  if(k==='sortie'||k==='entree') return formMvt(k,id);
+  if(k==='ajust') return formAjust(id);
+  if(k==='import') return formImport();
+  if(k==='new-eq') return formEq();
+  if(k==='edit-eq') return formEq(eqById(id));
+  if(k==='del-art'){ const a=artById(id); const n=S.mvts.filter(m=>m.articleId===id).length;
+    if(n){ if(!confirm(`« ${a.designation} » a ${n} mouvement(s). Il sera désactivé (masqué) pour garder l'historique. Continuer ?`)) return; await db.collection('stock_articles').doc(id).update({actif:false}); toast('Article désactivé'); }
+    else { if(!confirm(`Supprimer définitivement « ${a.designation} » ?`)) return; await db.collection('stock_articles').doc(id).delete(); toast('Article supprimé'); go('articles'); } return; }
+  if(k==='del-mvt'){ const m=S.mvts.find(x=>x.id===id); const a=artById(m.articleId);
+    if(!confirm('Annuler ce mouvement ? Le stock de l\'article sera corrigé en conséquence.')) return;
+    const d = m.type==='sortie'? num(m.quantite) : -num(m.quantite);
+    const b=db.batch(); b.delete(db.collection('stock_mouvements').doc(id)); if(a) b.update(db.collection('stock_articles').doc(a.id),{quantite:FV.increment(d)}); await b.commit(); toast('Mouvement annulé'); return; }
+  if(k==='save-inv'){ const list=[...document.querySelectorAll('.inv')].filter(i=>i.value.trim()!=='').map(i=>({a:artById(i.dataset.id), compte:num(i.value)}));
+    if(!list.length) return toast('Aucune quantité saisie');
+    const n=await ajuster(list, today(), 'Inventaire'); toast(n?`${n} écart(s) enregistré(s)`:'Aucun écart'); return; }
+  if(k==='save-cfg'){ const c={}; document.querySelectorAll('[data-p]').forEach(t=>c[t.dataset.p]=t.value.split('\n').map(s=>s.trim()).filter(Boolean));
+    document.querySelectorAll('[data-pn]').forEach(t=>c[t.dataset.pn]=Math.max(1,Math.round(num(t.value))));
+    await db.doc('stock_config/params').set(c,{merge:true}); S.horizon=null; toast('Paramètres enregistrés'); return; }
+  if(k==='seed'){ if(!confirm('Créer la liste d\'équipements types ?')) return;
+    const E=[['EXT','Extrudeuse / mouleuse','Production'],['MAL','Malaxeur','Production'],['BRO','Broyeur / désagrégateur','Production'],['LAM','Laminoir','Production'],['DOS','Doseur-alimentateur (caisse d\'alimentation)','Production'],['COU','Coupeur','Production'],['TAP','Tapis convoyeurs','Production'],['F1','Four n°1','Four'],['F2','Four n°2','Four'],['CHG','Chargeuse','Engin'],['CAM','Camion de livraison','Engin'],['GE','Groupe électrogène','Énergie'],['POM','Pompe à eau','Énergie']];
+    const b=db.batch(); for(const u of ['Ancienne usine','Nouvelle usine']) for(const [c,n,t] of E){ if(S.eqs.some(e=>e.nom===n+' — '+u)) continue; b.set(db.collection('stock_equipements').doc(),{code:c+'-'+(u[0]==='A'?'A':'N'), nom:n+' — '+u, usine:u, type:t, notes:''}); }
+    await b.commit(); toast('Équipements types créés : renommez ou supprimez ceux qui ne correspondent pas'); return; }
+  const today_=today();
+  if(k==='export-art'){ const A=S.A; csvDownload(`stock_articles_${today_}.csv`,[['Référence','Désignation','Type','Catégorie','Emplacement','Unité','Stock','Stock min','Point de commande','Conso/mois','Autonomie (j)','Prix unitaire','Valeur','Fournisseur','Délai (j)','État'],...Object.values(A.res).filter(r=>r.a.actif!==false).map(r=>[r.a.ref,r.a.designation,TYPES[r.a.type],r.a.categorie,r.a.emplacement,r.a.unite,r.q,r.a.stockMin,nf1.format(r.pointCmd),nf1.format(r.cm),isFinite(r.autonomie)?Math.floor(r.autonomie):'',r.a.prixUnitaire,Math.round(r.q*num(r.a.prixUnitaire)),r.a.fournisseur,r.a.delaiJours,STAT[r.statut][1]])]); return; }
+  if(k==='export-mvt'){ csvDownload(`stock_mouvements_${today_}.csv`,[['Date','Type','Référence','Article','Quantité','Pris par','Service','Motif','Raison','Équipement','Prix unitaire','Fournisseur','Facture','Note','Saisi par'],...S.mvts.map(m=>{const a=artById(m.articleId)||{}; return [m.date,m.type,a.ref,a.designation,m.type==='sortie'?-num(m.quantite):num(m.quantite),m.prisPar||m.demandeur||'',m.service||'',m.motif,m.raison||'',m.equipementId?eqName(m.equipementId):'',m.prixUnitaire,m.fournisseur,m.facture,m.note,m.par];})]); return; }
+  if(k==='export-ana'){ const A=S.A; csvDownload(`analyse_usure_${today_}.csv`,[['ABC','Référence','Article','Consommé','Nb sorties','Coût','Conso/mois','Durée de vie moy. (j)','Stock','Autonomie (j)','Rupture prévue','État'],...Object.values(A.res).filter(r=>r.qOut>0).sort((x,y)=>y.val-x.val).map(r=>[r.abc,r.a.ref,r.a.designation,r.qOut,r.n,Math.round(r.val),nf1.format(r.cm),r.intervalle?Math.round(r.intervalle):'',r.q,isFinite(r.autonomie)?Math.floor(r.autonomie):'',r.rupture||'',STAT[r.statut][1]])]); return; }
+  if(k==='export-cmd'){ const A=S.A; csvDownload(`a_commander_${today_}.csv`,[['Fournisseur','Référence','Article','Stock','Point de commande','Conso/mois','Délai (j)','Rupture prévue','Quantité conseillée','Prix unitaire','Montant','État'],...Object.values(A.res).filter(r=>['rupture','commander','bientot'].includes(r.statut)).map(r=>[r.a.fournisseur,r.a.ref,r.a.designation,r.q,nf1.format(r.pointCmd),nf1.format(r.cm),r.a.delaiJours,r.rupture||'',r.suggere,r.a.prixUnitaire,Math.round(r.suggere*num(r.a.prixUnitaire)),STAT[r.statut][1]])]); return; }
+}
+document.addEventListener('click', async e=>{
+  const t=e.target.closest('[data-act],[data-go],[data-art]'); if(!t||t.closest('dialog')) return;
+  if(t.dataset.act){ try{ await act(t.dataset.act); }catch(err){ alert(err.code==='permission-denied'?"Action refusée : votre rôle ne le permet pas, ou les règles Firestore du stock ne sont pas encore publiées.":(err.message||err)); } return; }
+  if(t.dataset.go) return go(t.dataset.go);
+  if(t.dataset.art){ S.artId=t.dataset.art; S.view='fiche'; render(); window.scrollTo(0,0); }
+});
+document.addEventListener('input', e=>{ if(e.target.id==='q'){ S.q=e.target.value; render(); } });
+document.addEventListener('change', e=>{ const f=e.target.dataset&&e.target.dataset.f; if(f){ S.filt[f]= e.target.type==='checkbox'?e.target.checked:e.target.value; render(); } });
+
+window.addEventListener('DOMContentLoaded', ()=>{ start().catch(e=>{ document.body.insertAdjacentHTML('beforeend',`<div class="login"><div class="box"><h1>Erreur</h1><p>${esc(e.message||e)}</p></div></div>`); }); });
+window.__stock = S; window.__analyse = analyse;
+})();
+</script>
+</body>
+</html>

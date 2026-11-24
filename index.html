@@ -236,6 +236,7 @@ const DEFAULTS = {
 const NON_CONSO = ['Transfert vers un autre magasin','Retour fournisseur'];
 const TYPES = {piece:'Pièce de rechange', materiel:'Matériel / outillage', conso:'Consommable'};
 const USINES = ['Ancienne usine','Nouvelle usine','Les deux usines'];
+const ETATS_EQ = ['En service','En panne','À l\'arrêt','Réformé'];
 
 /* ---------- état ---------- */
 const S = { user:null, role:'lecture', arts:[], mvts:[], eqs:[], cfg:{...DEFAULTS}, view:'dash', q:'', filt:{}, horizon:null, loaded:{a:0,m:0,e:0} };
@@ -547,11 +548,18 @@ VIEWS.inventaire = A => {
 VIEWS.inventaire.after = () => document.querySelectorAll('.inv').forEach(i=>i.oninput=()=>{ const a=artById(i.dataset.id); const c=$(`.ecart[data-for="${i.dataset.id}"]`); if(i.value.trim()===''){c.textContent='';return;} const e=num(i.value)-num(a.quantite); c.innerHTML= e===0?'<span class="pill good">0</span>':`<span class="pill ${e<0?'crit':'warn'}">${e>0?'+':''}${qty(e)}</span>`; });
 
 /* Équipements */
+function vnc(e){ const p=num(e.prixAchat), n=num(e.amortAns); if(!p) return 0; if(!n||!e.dateAchat) return p; const ans=daysBetween(e.dateAchat,today())/365.25; return Math.max(0, p*(1-ans/n)); }
 VIEWS.equipements = A => {
-  const cost={}, cnt={}; for(const m of S.mvts){ if(m.type!=='sortie'||!m.equipementId||NON_CONSO.includes(m.motif)||m.date<A.from) continue; const a=artById(m.articleId); cost[m.equipementId]=(cost[m.equipementId]||0)+num(m.quantite)*(num(m.prixUnitaire)||num(a?.prixUnitaire)); cnt[m.equipementId]=(cnt[m.equipementId]||0)+1; }
-  return header('Équipements', 'Machines, engins et fours sur lesquels les pièces sont montées', isAdmin()?`<button class="btn primary" data-act="new-eq">+ Nouvel équipement</button>`:'') +
-  `<div class="card"><div class="tw"><table><thead><tr><th>Code</th><th>Équipement</th><th>Usine</th><th>Type</th><th class="r">Sorties (${A.horizon} j)</th><th class="r">Coût pièces (${A.horizon} j)</th><th></th></tr></thead>
-  <tbody>${S.eqs.map(e=>`<tr><td class="mono">${esc(e.code||'')}</td><td>${esc(e.nom)}</td><td>${esc(e.usine||'')}</td><td>${esc(e.type||'')}</td><td class="r">${cnt[e.id]||0}</td><td class="r">${fcfa(cost[e.id]||0)}</td><td>${isAdmin()?`<button class="btn sm ghost" data-act="edit-eq:${e.id}">Modifier</button>`:''}</td></tr>`).join('')||'<tr><td colspan="7" class="empty">Aucun équipement.</td></tr>'}</tbody></table></div></div>`;
+  const cost={}, cnt={}, tot={}; for(const m of S.mvts){ if(m.type!=='sortie'||!m.equipementId||NON_CONSO.includes(m.motif)) continue; const a=artById(m.articleId); const v=num(m.quantite)*(num(m.prixUnitaire)||num(a?.prixUnitaire)); tot[m.equipementId]=(tot[m.equipementId]||0)+v; if(m.date<A.from) continue; cost[m.equipementId]=(cost[m.equipementId]||0)+v; cnt[m.equipementId]=(cnt[m.equipementId]||0)+1; }
+  const E=S.eqs.filter(e=>S.filt.eref||e.etat!=='Réformé');
+  const vAchat=E.reduce((s,e)=>s+num(e.prixAchat),0), vNette=E.reduce((s,e)=>s+vnc(e),0), cP=E.reduce((s,e)=>s+(cost[e.id]||0),0);
+  const EP={'En service':'good','En panne':'crit','À l\'arrêt':'warn','Réformé':''};
+  return header('Équipements', 'Machines, engins et fours sur lesquels les pièces sont montées', `<button class="btn" data-act="export-eq">Exporter</button>`+(isAdmin()?`<button class="btn primary" data-act="new-eq">+ Nouvel équipement</button>`:'')) +
+  `<div class="kpis"><div class="kpi"><b>${E.length}</b><span>équipements</span></div><div class="kpi"><b>${kfmt(vAchat)}</b><span>valeur d'achat du parc (F CFA)</span></div><div class="kpi"><b>${kfmt(vNette)}</b><span>valeur nette après amortissement</span></div><div class="kpi"><b>${kfmt(cP)}</b><span>pièces consommées sur ${A.horizon} j</span></div></div>
+  <div class="card"><div class="row noprint"><label class="check hint"><input type="checkbox" data-f="eref" ${S.filt.eref?'checked':''}> afficher les équipements réformés</label></div><div class="tw"><table><thead><tr><th>Code</th><th>Équipement</th><th>État</th><th>Mise en service</th><th class="r">Prix d'achat</th><th class="r">Valeur nette</th><th class="r">Coût pièces (${A.horizon} j)</th><th class="r">Pièces / an<br>en % du prix</th><th></th></tr></thead>
+  <tbody>${E.map(e=>{ const an=(cost[e.id]||0)*365/A.horizon; const pct=num(e.prixAchat)?an/num(e.prixAchat):null;
+    return `<tr><td class="mono">${esc(e.code||'')}</td><td>${esc(e.nom)}${e.marque?`<div class="hint">${esc(e.marque)}${e.serie?' · n° '+esc(e.serie):''}</div>`:''}</td><td><span class="pill ${EP[e.etat||'En service']||''}">${esc(e.etat||'En service')}</span></td><td>${e.dateAchat?fdate(e.dateAchat):'—'}</td><td class="r">${e.prixAchat?fcfa(e.prixAchat):'—'}</td><td class="r">${e.prixAchat?fcfa(vnc(e)):'—'}</td><td class="r">${fcfa(cost[e.id]||0)}<div class="hint">${cnt[e.id]||0} sortie(s) · total ${fcfa(tot[e.id]||0)}</div></td><td class="r">${pct==null?'—':`<span class="pill ${pct>0.2?'crit':pct>0.1?'warn':'good'}">${nf1.format(pct*100)} %</span>`}</td><td>${isAdmin()?`<button class="btn sm ghost" data-act="edit-eq:${e.id}">Modifier</button>`:''}</td></tr>`;}).join('')||'<tr><td colspan="9" class="empty">Aucun équipement.</td></tr>'}</tbody></table></div>
+  <p class="hint">Valeur nette : prix d'achat diminué de l'amortissement linéaire depuis la mise en service. « Pièces / an en % du prix » : coût des pièces de la période ramené à une année, comparé au prix d'achat. Au-delà de 20 %, la machine coûte cher à entretenir : à surveiller ou à remplacer.</p></div>`;
 };
 
 /* Paramètres */
@@ -673,9 +681,16 @@ function formEq(e){
     <label class="f">Nom *<input class="in" name="nom" required value="${esc(e.nom||'')}" placeholder="ex. Extrudeuse nouvelle usine"></label>
     <label class="f">Usine<select class="in" name="usine">${opts(USINES,e.usine,'—')}</select></label>
     <label class="f">Type<input class="in" name="type" value="${esc(e.type||'')}" placeholder="ex. Production, Engin, Four, Énergie"></label>
+    <label class="f">État<select class="in" name="etat">${opts(ETATS_EQ,e.etat||'En service')}</select></label>
+    <label class="f">Marque / modèle<input class="in" name="marque" value="${esc(e.marque||'')}" placeholder="ex. Bongioanni MB 40"></label>
+    <label class="f">N° de série<input class="in" name="serie" value="${esc(e.serie||'')}"></label>
+    <label class="f">Fournisseur<input class="in" name="fournisseur" value="${esc(e.fournisseur||'')}"></label>
+    <label class="f">Date d'achat / mise en service<input type="date" class="in" name="dateAchat" value="${esc(e.dateAchat||'')}"></label>
+    <label class="f">Prix d'achat (F CFA)<input class="in r" name="prixAchat" inputmode="decimal" value="${esc(e.prixAchat??'')}"></label>
+    <label class="f">Durée d'amortissement (années)<input class="in r" name="amortAns" inputmode="numeric" value="${esc(e.amortAns??'')}" placeholder="ex. 10"></label>
     <label class="f span2">Notes<input class="in" name="notes" value="${esc(e.notes||'')}"></label></div>
     ${e.id?`<button type="button" class="btn danger" data-del style="align-self:flex-start">Supprimer cet équipement</button>`:''}`,
-  async f=>{ const d={code:f.code.value.trim(), nom:f.nom.value.trim(), usine:f.usine.value, type:f.type.value.trim(), notes:f.notes.value.trim()};
+  async f=>{ const d={code:f.code.value.trim(), nom:f.nom.value.trim(), usine:f.usine.value, type:f.type.value.trim(), etat:f.etat.value, marque:f.marque.value.trim(), serie:f.serie.value.trim(), fournisseur:f.fournisseur.value.trim(), dateAchat:f.dateAchat.value, prixAchat:num(f.prixAchat.value), amortAns:num(f.amortAns.value), notes:f.notes.value.trim()};
     if(e.id) await db.collection('stock_equipements').doc(e.id).update(d); else await db.collection('stock_equipements').add(d); toast('Équipement enregistré'); });
   const del=document.querySelector('dialog [data-del]');
   if(del) del.onclick=async()=>{ if(!confirm('Supprimer cet équipement ? Les mouvements passés restent enregistrés.')) return; await db.collection('stock_equipements').doc(e.id).delete(); document.querySelector('dialog').close(); toast('Équipement supprimé'); };
@@ -733,6 +748,7 @@ async function act(a){
   const today_=today();
   if(k==='export-art'){ const A=S.A; csvDownload(`stock_articles_${today_}.csv`,[['Référence','Désignation','Type','Catégorie','Emplacement','Unité','Stock','Stock min','Point de commande','Conso/mois','Autonomie (j)','Prix unitaire','Valeur','Fournisseur','Délai (j)','État'],...Object.values(A.res).filter(r=>r.a.actif!==false).map(r=>[r.a.ref,r.a.designation,TYPES[r.a.type],r.a.categorie,r.a.emplacement,r.a.unite,r.q,r.a.stockMin,nf1.format(r.pointCmd),nf1.format(r.cm),isFinite(r.autonomie)?Math.floor(r.autonomie):'',r.a.prixUnitaire,Math.round(r.q*num(r.a.prixUnitaire)),r.a.fournisseur,r.a.delaiJours,STAT[r.statut][1]])]); return; }
   if(k==='export-mvt'){ csvDownload(`stock_mouvements_${today_}.csv`,[['Date','Type','Référence','Article','Quantité','Pris par','Service','Motif','Raison','Équipement','Prix unitaire','Fournisseur','Facture','Note','Saisi par'],...S.mvts.map(m=>{const a=artById(m.articleId)||{}; return [m.date,m.type,a.ref,a.designation,m.type==='sortie'?-num(m.quantite):num(m.quantite),m.prisPar||m.demandeur||'',m.service||'',m.motif,m.raison||'',m.equipementId?eqName(m.equipementId):'',m.prixUnitaire,m.fournisseur,m.facture,m.note,m.par];})]); return; }
+  if(k==='export-eq'){ csvDownload(`stock_equipements_${today_}.csv`,[['Code','Équipement','Usine','Type','État','Marque / modèle','N° de série','Fournisseur','Date d\'achat','Prix d\'achat','Amortissement (ans)','Valeur nette'],...S.eqs.map(e=>[e.code,e.nom,e.usine,e.type,e.etat||'En service',e.marque,e.serie,e.fournisseur,e.dateAchat,e.prixAchat,e.amortAns,Math.round(vnc(e))])]); return; }
   if(k==='export-ana'){ const A=S.A; csvDownload(`analyse_usure_${today_}.csv`,[['ABC','Référence','Article','Consommé','Nb sorties','Coût','Conso/mois','Durée de vie moy. (j)','Stock','Autonomie (j)','Rupture prévue','État'],...Object.values(A.res).filter(r=>r.qOut>0).sort((x,y)=>y.val-x.val).map(r=>[r.abc,r.a.ref,r.a.designation,r.qOut,r.n,Math.round(r.val),nf1.format(r.cm),r.intervalle?Math.round(r.intervalle):'',r.q,isFinite(r.autonomie)?Math.floor(r.autonomie):'',r.rupture||'',STAT[r.statut][1]])]); return; }
   if(k==='export-cmd'){ const A=S.A; csvDownload(`a_commander_${today_}.csv`,[['Fournisseur','Référence','Article','Stock','Point de commande','Conso/mois','Délai (j)','Rupture prévue','Quantité conseillée','Prix unitaire','Montant','État'],...Object.values(A.res).filter(r=>['rupture','commander','bientot'].includes(r.statut)).map(r=>[r.a.fournisseur,r.a.ref,r.a.designation,r.q,nf1.format(r.pointCmd),nf1.format(r.cm),r.a.delaiJours,r.rupture||'',r.suggere,r.a.prixUnitaire,Math.round(r.suggere*num(r.a.prixUnitaire)),STAT[r.statut][1]])]); return; }
 }
